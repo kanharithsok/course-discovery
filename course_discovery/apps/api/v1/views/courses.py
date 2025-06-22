@@ -84,25 +84,10 @@ class CourseViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
     # versions of this API should only support the system default, PageNumberPagination.
     pagination_class = ProxiedPagination
 
-    def get_object(self):
-        queryset = self.filter_queryset(self.get_queryset())
-
-        key = self.kwargs['key']
-
-        if self.course_key_regex.match(key):
-            filter_key = 'key'
-        elif self.course_uuid_regex.match(key):
-            filter_key = 'uuid'
-
-        filter_kwargs = {filter_key: key}  # pylint: disable=possibly-used-before-assignment
-        obj = get_object_or_404(queryset, **filter_kwargs)
-
-        # May raise a permission denied
-        self.check_object_permissions(self.request, obj)
-
-        return obj
-
     def get_queryset(self):
+        """
+        Get the list of courses for the view.
+        """
         partner = self.request.site.partner
         q = self.request.query_params.get('q')
         # We don't want to create an additional elasticsearch index right now for draft courses, so we
@@ -161,15 +146,45 @@ class CourseViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
                 partner=partner,
                 programs=programs,
             )
+
         if self.request.method == 'GET' and not get_query_param(self.request, 'include_retired_course_types'):
             retired_type_ids = list(
                 CourseType.objects.filter(slug__in=settings.RETIRED_COURSE_TYPES).values_list('id', flat=True)
             )
             queryset = queryset.exclude(type_id__in=retired_type_ids)
+
         if pub_q and edit_mode:
-            return queryset.filter(Q(key__icontains=pub_q) | Q(title__icontains=pub_q)).order_by('key')
+            queryset = queryset.filter(Q(key__icontains=pub_q) | Q(title__icontains=pub_q))
+
+        # Apply email domain restriction for CBC-Internal courses
+        user = self.request.user
+        if not user.is_staff:  # Staff users can see all courses
+            queryset = queryset.filter(
+                Q(public=True) |  # Public courses are always accessible
+                Q(organizations__key='CBC-Internal', organizations__isnull=False) &  # CBC-Internal courses
+                Q(organizations__key='CBC-Internal', organizations__isnull=False, organizations__users__email__endswith='@yopmail.com') |  # Only yopmail.com users can access CBC-Internal courses
+                Q(organizations__users=user)  # Courses from user's organizations
+            ).distinct()
 
         return queryset.order_by('key')
+
+    def get_object(self):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        key = self.kwargs['key']
+
+        if self.course_key_regex.match(key):
+            filter_key = 'key'
+        elif self.course_uuid_regex.match(key):
+            filter_key = 'uuid'
+
+        filter_kwargs = {filter_key: key}  # pylint: disable=possibly-used-before-assignment
+        obj = get_object_or_404(queryset, **filter_kwargs)
+
+        # May raise a permission denied
+        self.check_object_permissions(self.request, obj)
+
+        return obj
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

@@ -8,6 +8,7 @@ from rest_framework.renderers import CoreJSONRenderer
 from rest_framework.response import Response
 from rest_framework.schemas import SchemaGenerator
 from rest_framework.views import APIView
+from django.db.models import Q
 
 
 class SwaggerSchemaView(APIView):
@@ -57,3 +58,30 @@ def api_docs_permission_denied_handler(request):
     if request.user and request.user.is_authenticated:
         raise PermissionDenied(_('You are not permitted to access the API documentation.'))
     return _redirect_to_login(request)
+
+
+def get_queryset(self):
+    """
+    Get the list of courses for the view.
+    """
+    queryset = super().get_queryset()
+    user = self.request.user
+
+    # If user is not authenticated, return only public courses
+    if not user.is_authenticated:
+        return queryset.filter(public=True)
+
+    # If user is staff, return all courses
+    if user.is_staff:
+        return queryset
+
+    # Get user's email domain
+    user_email_domain = user.email.split('@')[-1] if user.email else None
+
+    # Filter courses based on organization and email domain
+    return queryset.filter(
+        Q(public=True) |  # Public courses are always accessible
+        Q(organizations__key='CBC-Internal', organizations__isnull=False) &  # CBC-Internal courses
+        Q(organizations__key='CBC-Internal', organizations__isnull=False, organizations__users__email__endswith='@yopmail.com') |  # Only yopmail.com users can access CBC-Internal courses
+        Q(organizations__users=user)  # Courses from user's organizations
+    ).distinct()
