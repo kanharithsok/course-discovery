@@ -91,10 +91,20 @@ class CourseFilter(filters.FilterSet):
     editors = CharListFilter(field_name='editors__user__pk', lookup_expr='in', distinct=True)
     course_type = filters.CharFilter(method='filter_by_course_type')
     timestamp = filters.DateTimeFilter(field_name='data_modified_timestamp', lookup_expr='gte')
+    internal_only = filters.BooleanFilter(method='filter_internal_courses')
 
     class Meta:
         model = Course
         fields = ('keys', 'uuids',)
+
+    def filter_internal_courses(self, queryset, _, value):
+        """
+        Filter to show only courses with title "Internal 1".
+        When internal_only=true, only courses with title "Internal 1" are returned.
+        """
+        if value:
+            return queryset.filter(title="Internal 1")
+        return queryset
 
     def filter_by_course_run_statuses(self, queryset, _, value):
         statuses = set(value.split(','))
