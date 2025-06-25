@@ -104,8 +104,8 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Filter for courses with title "Internal 1"
-        queryset = queryset.filter('term', title="Internal 1")
+        # Filter for courses with display_name "Internal 1"
+        queryset = queryset.filter('term', **{"content.display_name": "Internal 1"})
         return queryset
 
 
