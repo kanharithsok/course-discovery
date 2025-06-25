@@ -102,6 +102,12 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
         'prerequisites': {'field': 'prerequisites', 'enabled': True},
     }
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        # Filter for courses with title "Internal 1"
+        queryset = queryset.filter('term', title="Internal 1")
+        return queryset
+
 
 class CourseRunSearchViewSet(FacetQueryFieldsMixin, BaseElasticsearchDocumentViewSet):
     """
