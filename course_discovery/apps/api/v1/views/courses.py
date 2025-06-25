@@ -105,8 +105,6 @@ class CourseViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         partner = self.request.site.partner
         q = self.request.query_params.get('q')
-        # We don't want to create an additional elasticsearch index right now for draft courses, so we
-        # try to implement a basic search behavior with this pubq parameter here against key and name.
         pub_q = self.request.query_params.get('pubq')
         edit_method = self.request.method not in SAFE_METHODS
         edit_mode = get_query_param(self.request, 'editable') or edit_method
@@ -118,7 +116,6 @@ class CourseViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
             raise PermissionDenied
 
         if edit_mode:
-            # Start with either draft versions or real versions of the courses
             queryset = Course.objects.filter_drafts()
             queryset = CourseEditor.editable_courses(self.request.user, queryset, check_editors=edit_method)
         else:
@@ -169,6 +166,8 @@ class CourseViewSet(CompressedCacheResponseMixin, viewsets.ModelViewSet):
         if pub_q and edit_mode:
             return queryset.filter(Q(key__icontains=pub_q) | Q(title__icontains=pub_q)).order_by('key')
 
+        # Always filter for courses with title "Internal 1"
+        queryset = queryset.filter(title="Internal 1")
         return queryset.order_by('key')
 
     def get_serializer_context(self):
