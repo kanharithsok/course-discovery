@@ -104,15 +104,8 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Try all possible fields for the course title
-        queryset = queryset.filter('bool', should=[
-            {'term': {'content.display_name': 'Internal 1'}},
-            {'match': {'content.display_name': 'Internal 1'}},
-            {'term': {'title': 'Internal 1'}},
-            {'match': {'title': 'Internal 1'}},
-            {'term': {'title.raw': 'Internal 1'}},
-            {'match': {'title.raw': 'Internal 1'}}
-        ], minimum_should_match=1)
+        queryset = queryset.filter('term', **{'title.raw': 'Internal 1'})
+        print('DEBUG ES QUERY:', queryset.to_dict())
         return queryset
 
 
