@@ -104,12 +104,8 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        queryset = queryset.filter('term', **{'title.raw': 'Internal 1'})
-        # print('DEBUG ES QUERY:', queryset.to_dict(), flush=True)
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning('DEBUG ES QUERY: %s', queryset.to_dict())
-        return queryset
+        # Filter to only the course with id 'course-v1:CBC+CS104+2014_4'
+        return queryset.filter('term', **{'_id': 'course-v1:CBC+CS104+2014_4'})
 
 
 class CourseRunSearchViewSet(FacetQueryFieldsMixin, BaseElasticsearchDocumentViewSet):
