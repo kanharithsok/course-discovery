@@ -104,7 +104,10 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Use the Ids query to filter by document ID
+        return queryset.query(Ids(values=['course-v1:CBC+CS104+2014_4']))
+
+    def filter_queryset(self, queryset):
+        # This will override any filter backend logic
         return queryset.query(Ids(values=['course-v1:CBC+CS104+2014_4']))
 
 
