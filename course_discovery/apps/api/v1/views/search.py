@@ -7,7 +7,7 @@ from django_elasticsearch_dsl_drf.constants import (
     LOOKUP_QUERY_GTE, LOOKUP_QUERY_IN, LOOKUP_QUERY_LT, LOOKUP_QUERY_LTE
 )
 from django_elasticsearch_dsl_drf.filter_backends import DefaultOrderingFilterBackend, OrderingFilterBackend
-from elasticsearch_dsl.query import Q as ESDSLQ
+from elasticsearch_dsl.query import Q as ESDSLQ, Ids
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -104,8 +104,8 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        # Filter to only the course with id 'course-v1:CBC+CS104+2014_4'
-        return queryset.filter('term', **{'_id': 'course-v1:CBC+CS104+2014_4'})
+        # Use the Ids query to filter by document ID
+        return queryset.query(Ids(values=['course-v1:CBC+CS104+2014_4']))
 
 
 class CourseRunSearchViewSet(FacetQueryFieldsMixin, BaseElasticsearchDocumentViewSet):
