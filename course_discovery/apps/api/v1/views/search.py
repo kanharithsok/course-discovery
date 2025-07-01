@@ -81,8 +81,15 @@ class CatalogDataViewSet(viewsets.GenericViewSet):
     def create(self, request):
         return self.list(request)
 
+class CourseSearchViewSet(viewsets.GenericViewSet):
+    """
+    Course search viewset
+    """
 
-class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
+    def create(self, request):
+        return self.list(request)
+
+class CourseSearchViewSet2(BaseElasticsearchDocumentViewSet):
     """
     Course search viewset
     """
