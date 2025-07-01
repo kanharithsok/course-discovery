@@ -105,7 +105,7 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         queryset = queryset.filter('term', **{'title.raw': 'Internal 1'})
-        print('DEBUG ES QUERY:', queryset.to_dict())
+        print('DEBUG ES QUERY:', queryset.to_dict(), flush=True)
         return queryset
 
 
