@@ -102,6 +102,14 @@ class CourseSearchViewSet(BaseElasticsearchDocumentViewSet):
         'prerequisites': {'field': 'prerequisites', 'enabled': True},
     }
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter('term', title="Internal 1")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning('DEBUG ES QUERY: %s', queryset.to_dict())
+        return queryset
+
 
 class CourseRunSearchViewSet(FacetQueryFieldsMixin, BaseElasticsearchDocumentViewSet):
     """
